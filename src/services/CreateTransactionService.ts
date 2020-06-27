@@ -1,9 +1,10 @@
 import { getCustomRepository } from 'typeorm';
 
-// import AppError from '../errors/AppError';
+import AppError from '../errors/AppError';
 import Transaction from '../models/Transaction';
 import TransactionsRepository from '../repositories/TransactionsRepository';
 import GetCategoryIdService from './GetCategoryIdService';
+import transactionsRouter from '../routes/transactions.routes';
 
 interface Request {
   title: string;
@@ -25,6 +26,11 @@ class CreateTransactionService {
     const getCategoryId = new GetCategoryIdService();
 
     const category_id = await getCategoryId.execute(category);
+
+    const balance = await transactionsRepository.getBalance();
+
+    if (type === 'outcome' && value > balance.total)
+      throw new AppError('Outcome value cannot be bigger than total balance');
 
     const transaction = transactionsRepository.create({
       category_id,
