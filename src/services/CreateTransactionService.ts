@@ -1,12 +1,13 @@
 import { getRepository } from 'typeorm';
-import AppError from '../errors/AppError';
 
+// import AppError from '../errors/AppError';
 import Transaction from '../models/Transaction';
+import GetCategoryIdService from './GetCategoryIdService';
 
 interface Request {
   title: string;
   value: number;
-  type: string;
+  type: 'income' | 'outcome';
   category: string;
 }
 
@@ -18,11 +19,22 @@ class CreateTransactionService {
     category,
   }: Request): Promise<Transaction> {
     // TODO
-    const transactionsRepository = getRepository(Transaction);
+    const transactionRepository = getRepository(Transaction);
 
-    const checkCategoryExists = transactionsRepository.findOne({
-      where: { category_id },
+    const getCategoryId = new GetCategoryIdService();
+
+    const category_id = await getCategoryId.execute(category);
+
+    const transaction = transactionRepository.create({
+      category_id,
+      title,
+      type,
+      value,
     });
+
+    await transactionRepository.save(transaction);
+
+    return transaction;
   }
 }
 
